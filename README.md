@@ -17,9 +17,7 @@ Install
 Run a spider
 ------------
 
-The following spiders have been created so far.
-
 ### Comic relief
 
-To output funds found to a `funds.jl` JSON lines file
+To output funds found to a `funds.jl` [JSON lines](http://jsonlines.org/) file
 run: `scrapy crawl comicrelief -o funds.jl`

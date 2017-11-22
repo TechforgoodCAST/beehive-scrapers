@@ -1,4 +1,5 @@
 import scrapy
+import hashlib
 
 
 class ComicReliefSpider(scrapy.Spider):
@@ -20,11 +21,8 @@ class ComicReliefSpider(scrapy.Spider):
  
     def parse_fund(self, response):
         fund = response.meta.get('fund', {})
-        info = response.css('section.paragraph')[0].css(
-            'p.text-align-center::text').extract()git 
+        info = response.css('main').extract_first()
         fund.update({
-            "opens": info[0].strip(),
-            "closes": info[1].strip(),
-            "grants_available": info[2].strip(),
+            "contentHash": hashlib.md5(info.encode()).hexdigest()
         })
         yield fund

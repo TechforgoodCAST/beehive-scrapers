@@ -3,6 +3,9 @@ env/
 __pycache__/
 *.pyc
 
+.scrapy/
+httpcache/
+
 *.json
 *.csv
 *.jl

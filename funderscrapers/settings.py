@@ -91,4 +91,4 @@ HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
 
 # Options for saving to MongoDB
 MONGO_URI = "mongodb://localhost:27017"
-MONGO_DATABASE = "beehive-data"
+MONGO_DATABASE = "360giving"

@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 
-# Define your item pipelines here
-#
-# Don't forget to add your pipeline to the ITEM_PIPELINES setting
-# See: http://doc.scrapy.org/en/latest/topics/item-pipeline.html
+# Item pipelines
 import pymongo
 import datetime
+import hashlib
+import json
 
 
 class SaveDBPipeline(object):
 
-    collection_name = 'scraped_funds'
+    fund_collection = 'scraped_funds'
+    notification_collection = 'notifications'
 
     def __init__(self, mongo_uri, mongo_db):
         self.mongo_uri = mongo_uri
@@ -30,28 +30,34 @@ class SaveDBPipeline(object):
     def close_spider(self, spider):
         self.client.close()
 
+    def send_notification(self, message, fund, content=""):
+        self.db[self.notification_collection].insert_one({
+            "notice": message,
+            "fund": fund,
+            "date_issued": datetime.datetime.now(),
+            "content": content
+        })
+
     def process_item(self, item, spider):
         date_scraped = datetime.datetime.now()
-        con = self.db[self.collection_name]
+        con = self.db[self.fund_collection]
         new_item = dict(item)
+        content = json.dumps(new_item, sort_keys=True)
+        new_item["contentHash"] = hashlib.md5(content.encode()).hexdigest()
         new_item["last_scraped"] = date_scraped
         new_item["first_scraped"] = date_scraped
         _id = new_item["link"]
+        notif_content = "Fund: {}\nFunder: {}".format(
+            new_item["title"], spider.name)
 
         existing_item = con.find_one({"_id": _id})
         # check whether fund already exists
         if existing_item:
             latest_scrape = existing_item.get('scrapes', [])[-1]
             # if it does then check whether it is changed
-            if (latest_scrape.get("contentHash", "") != new_item.get("contentHash", "") or
-                latest_scrape.get("description", "") != new_item.get("description", "") or
-                latest_scrape.get("title", "") != new_item.get("title", "")):
+            if latest_scrape.get("contentHash", "") != new_item.get("contentHash", ""):
                 # if it is then "changed fund notification"
-                self.db["notifications"].insert_one({
-                    "notice": "Fund changed",
-                    "fund": _id,
-                    "date_issued": datetime.datetime.now()
-                })
+                self.send_notification("Fund changed", _id, content=notif_content)
                 existing_item["scrapes"].append(new_item)
 
             else:
@@ -62,11 +68,7 @@ class SaveDBPipeline(object):
             con.find_one_and_replace({"_id": _id}, existing_item)
         else:
             # if it doesn't then "new fund notification"
-            self.db["notifications"].insert_one({
-                "notice": "New fund",
-                "fund": _id,
-                "date_issued": datetime.datetime.now()
-            })
+            self.send_notification("New fund", _id, content=notif_content)
             con.insert_one({
                 "_id": _id,
                 "funder": spider.name,

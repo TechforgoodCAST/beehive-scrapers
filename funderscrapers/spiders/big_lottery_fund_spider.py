@@ -26,11 +26,7 @@ class BigLotteryFundSpider(scrapy.Spider):
  
     def parse_fund(self, response):
         fund = response.meta.get('fund', {})
-        info = response.css('article#mainContentContainer').extract_first()
-        for f in ["description", "title"]:
-            if info is None:
-                info = fund[f] or fund[f]
         fund.update({
-            "contentHash": hashlib.md5(info.encode()).hexdigest()
+            "info": response.css('article#mainContentContainer').extract_first()
         })
         yield fund

@@ -29,8 +29,9 @@ class SaveDBPipeline(object):
 
     def close_spider(self, spider):
         self.client.close()
+        self.send_notification("Finished scraping {}".format(spider.name))
 
-    def send_notification(self, message, fund, content=""):
+    def send_notification(self, message, fund="", content=""):
         self.db[self.notification_collection].insert_one({
             "notice": message,
             "fund": fund,

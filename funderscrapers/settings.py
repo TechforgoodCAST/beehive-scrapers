@@ -92,3 +92,7 @@ HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
 # Options for saving to MongoDB
 MONGO_URI = "mongodb://localhost:27017"
 MONGO_DATABASE = "360giving"
+
+# New templates directory
+import os
+TEMPLATES_DIR = os.path.join("funderscrapers", "templates")

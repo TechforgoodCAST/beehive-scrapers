@@ -1,0 +1,31 @@
+# -*- coding: utf-8 -*-
+import scrapy
+
+
+class $classname(scrapy.Spider):
+    name = '$name'
+    start_urls = ['http://$domain/']
+
+    def parse(self, response):
+        for f in response.css('List Funds CSS Selector'):
+            fund = {
+                "title": f.css('h3 a::text').extract_first(),
+                "description": f.css('infoDetails p::text').extract_first(),
+                "link": f.css('h3 a::attr(href)').extract_first(),
+            }
+            fund["link"] = response.urljoin(fund["link"])
+            request = scrapy.Request(
+                fund["link"], callback=self.parse_fund, meta={'fund': fund})
+            yield request
+
+        next_page = response.css(
+            'a.pagination-next::attr(href)').extract_first()
+        if next_page is not None:
+            yield response.follow(next_page, callback=self.parse)
+
+    def parse_fund(self, response):
+        fund = response.meta.get('fund', {})
+        fund.update({
+            "info": response.css('article#mainContentContainer').extract_first()
+        })
+        yield fund

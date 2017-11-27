@@ -12,13 +12,15 @@ class SaveDBPipeline(object):
     fund_collection = 'scraped_funds'
     notification_collection = 'notifications'
 
-    def __init__(self, mongo_uri, mongo_db):
+    def __init__(self, stats, mongo_uri, mongo_db):
+        self.stats = stats
         self.mongo_uri = mongo_uri
         self.mongo_db = mongo_db
 
     @classmethod
     def from_crawler(cls, crawler):
         return cls(
+            stats=crawler.stats,
             mongo_uri=crawler.settings.get('MONGO_URI'),
             mongo_db=crawler.settings.get('MONGO_DATABASE', 'items')
         )
@@ -26,6 +28,10 @@ class SaveDBPipeline(object):
     def open_spider(self, spider):
         self.client = pymongo.MongoClient(self.mongo_uri)
         self.db = self.client[self.mongo_db]
+        self.stats.set_value('savedb/itemssaved', 0)
+        self.stats.set_value('savedb/newitems', 0)
+        self.stats.set_value('savedb/changeditems', 0)
+        self.stats.set_value('savedb/unchangeditems', 0)
 
     def close_spider(self, spider):
         self.client.close()
@@ -60,13 +66,16 @@ class SaveDBPipeline(object):
                 # if it is then "changed fund notification"
                 self.send_notification("Fund changed", _id, content=notif_content)
                 existing_item["scrapes"].append(new_item)
+                self.stats.inc_value('savedb/changeditems')
 
             else:
                 # if not then just update the last_scraped date
                 existing_item["scrapes"][-1]["last_scraped"] = date_scraped
+                self.stats.inc_value('savedb/unchangeditems')
                 
             existing_item["funder"] = spider.name
             con.find_one_and_replace({"_id": _id}, existing_item)
+            self.stats.inc_value('savedb/itemssaved')
         else:
             # if it doesn't then "new fund notification"
             self.send_notification("New fund", _id, content=notif_content)
@@ -75,5 +84,7 @@ class SaveDBPipeline(object):
                 "funder": spider.name,
                 "scrapes": [new_item]
             })
+            self.stats.inc_value('savedb/itemssaved')
+            self.stats.inc_value('savedb/newitems')
 
         return item

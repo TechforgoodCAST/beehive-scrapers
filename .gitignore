@@ -9,3 +9,4 @@ httpcache/
 *.json
 *.csv
 *.jl
+*.db

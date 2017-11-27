@@ -5,7 +5,9 @@ import pymongo
 import datetime
 import hashlib
 import json
+import logging
 
+logger = logging.getLogger(__name__)
 
 class SaveDBPipeline(object):
 
@@ -76,6 +78,7 @@ class SaveDBPipeline(object):
             existing_item["funder"] = spider.name
             con.find_one_and_replace({"_id": _id}, existing_item)
             self.stats.inc_value('savedb/itemssaved')
+            logger.info('Item saved to Database {}'.format(self.mongo_db))
         else:
             # if it doesn't then "new fund notification"
             self.send_notification("New fund", _id, content=notif_content)
@@ -86,5 +89,6 @@ class SaveDBPipeline(object):
             })
             self.stats.inc_value('savedb/itemssaved')
             self.stats.inc_value('savedb/newitems')
+            logger.info('Item saved to Database {}'.format(self.mongo_db))
 
         return item

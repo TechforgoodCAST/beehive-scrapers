@@ -45,3 +45,14 @@ Run a spider
 
 To output funds found to a `funds.jl` [JSON lines](http://jsonlines.org/) file
 run: `scrapy crawl comicrelief -o funds.jl`
+
+Run all spiders
+---------------
+
+To run all spiders use the following command:
+
+```bash
+python funderscrapers/crawl_all.py
+```
+
+You can also use `crawl_all.bat` in Windows or `./crawl_all.sh` in Bash.

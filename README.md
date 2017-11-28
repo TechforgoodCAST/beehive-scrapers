@@ -13,6 +13,7 @@ Install
 2. Setup virtual environment `python3 venv env`
 3. Enter virtual environment `source env\bin\activate` (linux) or `env\Scripts\activate` (windows)
 4. Install requirements `pip install -r requirements.txt`
+5. (Windows only) install pypiwin32: `pip install pypiwin32`
 
 Write a new spider
 ------------------
